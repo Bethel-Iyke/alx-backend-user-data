@@ -7,12 +7,48 @@ from api.v1.views import app_views
 from flask import Flask, jsonify, abort, request
 from flask_cors import (CORS, cross_origin)
 import os
+from api.v1.auth.auth import Auth
+from api.v1.auth.basic_auth import BasicAuth
 
 
 app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
+auth = None
+auth_type = getenv('AUTH_TYPE', None)
+auth = auth_type
 
+excluded_paths = [
+    '/api/v1/status/',
+    '/api/v1/auth_session/login/',
+    '/api/v1/unauthorized/',
+    '/api/v1/forbidden/']
+
+# Create instance of Auth if the auth is specified
+
+if auth == 'auth':
+    auth = Auth()
+elif auth == 'basic_auth':
+    auth = BasicAuth()
+elif auth == 'session_auth':
+    auth = SessionAuth()
+
+@app.before_request
+def before_request_func():
+    '''Before request method'''
+    if auth:
+        path = request.path
+        # print(path)
+        if auth.require_auth(path, excluded_paths):
+            # if auth.authorization_header(request) is None:
+            # abort(401)
+            if not auth.authorization_header(
+                    request) and not auth.session_cookie(request):
+                abort(401)
+            if auth.current_user(request) is None:
+                abort(403)
+            else:
+                request.current_user = auth.current_user(request)
 
 @app.errorhandler(404)
 def not_found(error) -> str:
@@ -20,18 +56,12 @@ def not_found(error) -> str:
     """
     return jsonify({"error": "Not found"}), 404
 
-@app.errorhandler(404)
-def unauthorized(error) -> str:
-    """the unauthorized handler function"""
-    return jsonify({"error": "Unauthorized"}), 401
 
-def authorized() -> str:
-    """GET /api/v1/unauthorized"""
-    abort(401)
 @app.errorhandler(401)
 def unauthorized(error) -> str:
     """unauthorized handler"""
     return jsonify({"error": "Unauthorized"}), 401
+
 
 @app.errorhandler(403)
 def forbidden(error) -> str:
