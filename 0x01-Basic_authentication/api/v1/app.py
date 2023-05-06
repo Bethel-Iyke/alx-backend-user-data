@@ -33,6 +33,7 @@ elif auth == 'basic_auth':
 elif auth == 'session_auth':
     auth = SessionAuth()
 
+
 @app.before_request
 def before_request_func():
     '''Before request method'''
@@ -49,6 +50,7 @@ def before_request_func():
                 abort(403)
             else:
                 request.current_user = auth.current_user(request)
+
 
 @app.errorhandler(404)
 def not_found(error) -> str:
@@ -67,6 +69,7 @@ def unauthorized(error) -> str:
 def forbidden(error) -> str:
     """forbidden handler"""
     return jsonify({"error": "Forbidden"}), 403
+
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")
