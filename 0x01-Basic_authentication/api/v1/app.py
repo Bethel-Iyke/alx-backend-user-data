@@ -14,42 +14,33 @@ from api.v1.auth.basic_auth import BasicAuth
 app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
-auth = None
-auth_type = getenv('AUTH_TYPE', None)
-auth = auth_type
+# auth = None
 
-excluded_paths = [
-    '/api/v1/status/',
-    '/api/v1/auth_session/login/',
-    '/api/v1/unauthorized/',
-    '/api/v1/forbidden/']
+auth_type = getenv('AUTH_TYPE')
 
-# Create instance of Auth if the auth is specified
-
-if auth == 'auth':
-    auth = Auth()
-elif auth == 'basic_auth':
+if auth_type == 'basic_auth':
     auth = BasicAuth()
-elif auth == 'session_auth':
-    auth = SessionAuth()
+elif auth_type == 'auth':
+    auth = Auth()
+else:
+    auth = None
 
 
 @app.before_request
-def before_request_func():
-    '''Before request method'''
-    if auth:
-        path = request.path
-        # print(path)
-        if auth.require_auth(path, excluded_paths):
-            # if auth.authorization_header(request) is None:
-            # abort(401)
-            if not auth.authorization_header(
-                    request) and not auth.session_cookie(request):
-                abort(401)
-            if auth.current_user(request) is None:
-                abort(403)
-            else:
-                request.current_user = auth.current_user(request)
+def before_request():
+    """Handle before request"""
+    if auth is None:
+        return
+    excluded_paths = [
+        '/api/v1/status/',
+        '/api/v1/unauthorized/',
+        '/api/v1/forbidden/']
+    if not auth.require_auth(request.path, excluded_paths):
+        return
+    if auth.authorization_header(request) is None:
+        abort(401)
+    if auth.current_user(request) is None:
+        abort(403)
 
 
 @app.errorhandler(404)
