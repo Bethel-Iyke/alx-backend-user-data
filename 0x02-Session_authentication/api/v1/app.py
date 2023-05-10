@@ -19,7 +19,6 @@ auth = None
 auth_type = getenv('AUTH_TYPE', None)
 auth = auth_type
 
-
 excluded_paths = [
     '/api/v1/status/',
     '/api/v1/auth_session/login/',
@@ -65,17 +64,17 @@ def not_found(error) -> str:
 
 @app.errorhandler(401)
 def unauthorized(error) -> str:
-    """unauthorized handler"""
+    """Unauthorized handler"""
     return jsonify({"error": "Unauthorized"}), 401
 
 
 @app.errorhandler(403)
 def forbidden(error) -> str:
-    """forbidden handler"""
+    '''Forbidden handler'''
     return jsonify({"error": "Forbidden"}), 403
 
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")
     port = getenv("API_PORT", "5000")
-    app.run(host=host, port=port)
+    app.run(host=host, port=port, debug=True)
