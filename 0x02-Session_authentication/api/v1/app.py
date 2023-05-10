@@ -16,6 +16,9 @@ app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 auth = None
+auth_type = getenv('AUTH_TYPE', None)
+auth = auth_type
+
 
 excluded_paths = [
     '/api/v1/status/',
