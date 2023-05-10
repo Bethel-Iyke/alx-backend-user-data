@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""Session authentication."""
+'''Session Auth class'''
+
 from api.v1.auth.auth import Auth
 from uuid import uuid4
+from models.user import User
+from typing import TypeVar
 
 
 class SessionAuth(Auth):
-    """Inherits from Auth."""
+    '''Session Auth class'''
     user_id_by_session_id = {}
 
     def __init__(self):
-        """Constructor."""
+        '''Initializer'''
         super().__init__()
 
+        # self.user_id_by_session_id = user_id_by_session_id
+
     def create_session(self, user_id: str = None) -> str:
-        """Creates a Session ID for a user_id."""
+        '''Create session id'''
         if user_id is None or not isinstance(user_id, str):
             return None
         session_id = str(uuid4())
@@ -21,7 +26,36 @@ class SessionAuth(Auth):
         return session_id
 
     def user_id_for_session_id(self, session_id: str = None) -> str:
-        """Returns a User ID based on a Session ID."""
+        '''Return user id'''
         if session_id is None or not isinstance(session_id, str):
             return None
-        return self.user_id_by_session_id.get(session_id)
+
+        user_id = self.user_id_by_session_id.get(session_id)
+        return user_id
+
+    def current_user(self, request=None) -> TypeVar('User'):
+        '''Return user object based on cookie'''
+        # Get session ID
+        session_id = self.session_cookie(request)
+
+        # Get user_id with session_id
+        user_id = self.user_id_for_session_id(session_id)
+
+        # Retrieve User object with the user_id
+        user = User.get(user_id)
+        return user
+
+    def destroy_session(self, request=None) -> bool:
+        '''Delete User Session'''
+        if not request or not self.session_cookie(request):
+            return False
+
+        # Get session id
+        session_id = self.session_cookie(request)
+
+        # Check validity
+        if not self.user_id_for_session_id(session_id):
+            return False
+        else:
+            del self.user_id_by_session_id[session_id]
+            return True
