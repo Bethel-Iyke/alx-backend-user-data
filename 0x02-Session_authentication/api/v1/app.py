@@ -52,21 +52,6 @@ def before_request_func() -> str:
             abort(403)
         request.current_user = auth.current_user(request)
 
-"""@app.before_request
-#def before_request():"""
-    """Handle before request"""
-    """if auth:
-        if auth.require_auth(request.path, excluded_paths):
-            if auth.authorization_header(request) is None:
-                abort(401)
-            if auth.current_user(request) is None:
-                abort(403)
-            if auth.authorization_header(
-                    request) is None and auth.session_cookies(request) is None:
-                abort(401)
-            else:
-                request.current_user = auth.current_user(request)"""
-
 
 @app.errorhandler(404)
 def not_found(error) -> str:
