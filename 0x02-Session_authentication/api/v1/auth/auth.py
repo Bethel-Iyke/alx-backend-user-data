@@ -1,42 +1,46 @@
 #!/usr/bin/env python3
-"""Creates the class Auth that has different methods"""
+""" Auth module
+"""
 
 from flask import request
 from typing import List, TypeVar
 
 
-class Auth():
-    """Manage the API authentication."""
-
+class Auth:
+    """ Auth class
+    """
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
-        """Return a boolean."""
-        if not path or not excluded_paths:
+        """ require_auth method
+        """
+        if path is None or excluded_paths is None or excluded_paths == []:
             return True
-
+        ''' allowing * at the end of excluded paths'''
         for excluded_path in excluded_paths:
-            if excluded_path.endswith('*'):
+            if excluded_path[-1] == '*':
                 if path.startswith(excluded_path[:-1]):
                     return False
-            elif path == excluded_path\
-                    or path.startswith(excluded_path + '/')\
-                    or (excluded_path.endswith('/')
-                        and path.startswith(excluded_path[:-1])):
-                return False
+        if path[-1] != '/':
+            path += '/'
+        if path in excluded_paths:
+            return False
         return True
 
     def authorization_header(self, request=None) -> str:
-        """the method authorization header"""
+        """ authorization_header method
+        """
         if request is None or 'Authorization' not in request.headers:
             return None
         return request.headers['Authorization']
 
     def current_user(self, request=None) -> TypeVar('User'):
-        """the  method current user"""
+        """ current_user method
+        """
         return None
 
     def session_cookie(self, request=None):
-        """Returns none if cookies is none """
+        """Return cookie value from request
+        """
+        from os import getenv
         if request is None:
             return None
-        session_id = getenv('SESSION_NAME')
-        return request.cookies.get(session_id)
+        return request.cookies.get(getenv('SESSION_NAME'))
